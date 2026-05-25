@@ -32,14 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       const btn = form.querySelector('button[type="submit"]');
-      btn.textContent = 'Message Sent!';
+      btn.textContent = 'Sent';
       btn.disabled = true;
-      btn.style.background = '#059669';
+      btn.style.background = 'rgba(34,197,94,.15)';
+      btn.style.color = '#4ade80';
+      btn.style.border = '1px solid rgba(34,197,94,.3)';
       setTimeout(() => {
         form.reset();
         btn.textContent = 'Send Message';
         btn.disabled = false;
         btn.style.background = '';
+        btn.style.color = '';
+        btn.style.border = '';
       }, 3000);
     });
   }
@@ -51,12 +55,12 @@ document.addEventListener('DOMContentLoaded', () => {
         observer.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.1 });
+  }, { threshold: 0.08, rootMargin: '0px 0px -40px 0px' });
 
-  document.querySelectorAll('.feature-card, .subject-card, .mentoring-card, .blog-card, .resource-item, .process-step').forEach(el => {
+  document.querySelectorAll('.feature-card, .subject-card, .mentoring-card, .blog-card, .resource-item, .process-step').forEach((el, i) => {
     el.style.opacity = '0';
-    el.style.transform = 'translateY(20px)';
-    el.style.transition = 'opacity .5s ease, transform .5s ease';
+    el.style.transform = 'translateY(16px)';
+    el.style.transition = `opacity .4s ease ${i % 3 * .08}s, transform .4s ease ${i % 3 * .08}s`;
     observer.observe(el);
   });
 });
