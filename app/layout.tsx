@@ -11,14 +11,14 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Tanuj Kakumani | simplytk",
+  title: "Tanuj Kakumani | simplytk — Mentoring & Resources",
   description:
-    "A-Level & UCAS guidance, Imperial insider tips, health & fitness advice, and spring week strategies — from an Imperial student who's done it all.",
+    "1:1 mentoring and downloadable playbooks for A-Levels, UCAS, spring weeks, and fitness — from an Imperial student who's landed 6+ spring weeks.",
   metadataBase: new URL("https://simplytk.com"),
   openGraph: {
-    title: "Tanuj Kakumani | simplytk",
+    title: "Tanuj Kakumani | simplytk — Mentoring & Resources",
     description:
-      "A-Level & UCAS guidance, Imperial insider tips, health & fitness advice, and spring week strategies — from an Imperial student who's done it all.",
+      "1:1 mentoring and downloadable playbooks for A-Levels, UCAS, spring weeks, and fitness — from an Imperial student who's landed 6+ spring weeks.",
     url: "https://simplytk.com",
     siteName: "simplytk",
     images: [
@@ -34,9 +34,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Tanuj Kakumani | simplytk",
+    title: "Tanuj Kakumani | simplytk — Mentoring & Resources",
     description:
-      "A-Level & UCAS guidance, Imperial insider tips, health & fitness advice, and spring week strategies.",
+      "1:1 mentoring and downloadable playbooks for A-Levels, UCAS, spring weeks, and fitness.",
     images: ["/images/og.jpg"],
   },
   icons: {

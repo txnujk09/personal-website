@@ -1,15 +1,10 @@
 type ResourceCardProps = {
   title: string;
   description: string;
-  image: string;
   href: string;
 };
 
-export function ResourceCard({
-  title,
-  description,
-  href,
-}: ResourceCardProps) {
+export function ResourceCard({ title, description, href }: ResourceCardProps) {
   return (
     <a
       href={href}

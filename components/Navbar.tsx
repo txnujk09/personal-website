@@ -28,8 +28,8 @@ export function Navbar() {
               {link.label}
             </a>
           ))}
-          <Button href="#newsletter" className="ml-2 text-xs">
-            Subscribe
+          <Button href="#mentoring" className="ml-2 text-xs">
+            Book a call
           </Button>
         </div>
 
@@ -65,8 +65,8 @@ export function Navbar() {
                 {link.label}
               </a>
             ))}
-            <Button href="#newsletter" className="mt-2 w-full text-xs">
-              Subscribe
+            <Button href="#mentoring" className="mt-2 w-full text-xs">
+              Book a call
             </Button>
           </div>
         </div>

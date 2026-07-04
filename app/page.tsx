@@ -1,17 +1,23 @@
 import { Hero } from "@/components/Hero";
-import { Newsletter } from "@/components/Newsletter";
 import { ResourceGrid } from "@/components/ResourceGrid";
-import { About } from "@/components/About";
+import { Mentoring } from "@/components/Mentoring";
+import { Store } from "@/components/Store";
 import { Testimonials } from "@/components/Testimonials";
+import { About } from "@/components/About";
+import { FAQ } from "@/components/FAQ";
+import { Newsletter } from "@/components/Newsletter";
 
 export default function Home() {
   return (
     <>
       <Hero />
-      <Newsletter />
       <ResourceGrid />
-      <About />
+      <Mentoring />
+      <Store />
       <Testimonials />
+      <About />
+      <FAQ />
+      <Newsletter />
     </>
   );
 }
