@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex" />
+<title>Content editor · simplytk</title>
+<style>
+  :root {
+    --bg: #f9fafb; --card: #ffffff; --fg: #0a0a0a; --muted: #6b7280;
+    --border: #e5e7eb; --accent: #2563eb; --danger: #dc2626; --ok: #16a34a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Inter, sans-serif;
+    line-height: 1.5;
+  }
+  header {
+    position: sticky; top: 0; z-index: 10; background: rgba(255,255,255,.85);
+    backdrop-filter: blur(8px); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; flex-wrap: wrap; align-items: center; gap: 12px;
+  }
+  header h1 { font-size: 16px; margin: 0; margin-right: auto; }
+  main { max-width: 780px; margin: 0 auto; padding: 24px 20px 120px; }
+  .section {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px; margin-bottom: 20px;
+  }
+  .section > h2 { font-size: 15px; margin: 0 0 4px; }
+  .section > .hint { color: var(--muted); font-size: 13px; margin: 0 0 16px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; }
+  input[type=text], textarea {
+    width: 100%; padding: 9px 11px; border: 1px solid var(--border); border-radius: 8px;
+    font: inherit; font-size: 14px; background: #fff; color: var(--fg);
+  }
+  textarea { min-height: 70px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid rgba(37,99,235,.25); border-color: var(--accent); }
+  .checkbox { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--fg); }
+  .checkbox input { width: 16px; height: 16px; }
+  .card {
+    border: 1px solid var(--border); border-radius: 10px; padding: 16px;
+    margin-bottom: 12px; background: #fcfcfd;
+  }
+  .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+  .card-head span { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .group { border-left: 2px solid var(--border); padding-left: 14px; margin: 12px 0; }
+  .group > h3 { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 0 0 10px; }
+  .strlist-row { display: flex; gap: 8px; margin-bottom: 8px; }
+  .strlist-row input { flex: 1; }
+  button {
+    font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border); background: #fff; color: var(--fg);
+    padding: 8px 14px; border-radius: 8px;
+  }
+  button:hover { background: var(--bg); }
+  button.primary { background: var(--fg); color: #fff; border-color: var(--fg); }
+  button.primary:hover { background: #222; }
+  button.small { padding: 5px 10px; font-size: 12px; }
+  button.link { border: none; background: none; color: var(--danger); padding: 4px 6px; }
+  button.link:hover { text-decoration: underline; background: none; }
+  button.add { border-style: dashed; color: var(--accent); width: 100%; margin-top: 4px; }
+  #status { font-size: 13px; font-weight: 600; }
+  #status.ok { color: var(--ok); }
+  #status.err { color: var(--danger); }
+  #status.busy { color: var(--muted); }
+  .pw { padding: 8px 11px; border: 1px solid var(--border); border-radius: 8px; font: inherit; font-size: 13px; width: 150px; }
+  .toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .banner {
+    background: #eff6ff; border: 1px solid #bfdbfe; color: #1e3a8a;
+    border-radius: 10px; padding: 12px 14px; font-size: 13px; margin-bottom: 20px;
+  }
+  a.preview { font-size: 13px; color: var(--accent); text-decoration: none; }
+  a.preview:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header>
+  <h1>✏️ Content editor</h1>
+  <a class="preview" href="/" target="_blank" rel="noopener">View site ↗</a>
+  <div class="toolbar">
+    <input id="password" class="pw" type="password" placeholder="Publish password" autocomplete="off" />
+    <button id="publish" class="primary">Publish</button>
+  </div>
+  <span id="status"></span>
+</header>
+
+<main>
+  <div class="banner">
+    Edit anything below, then click <strong>Publish</strong>. Your live site updates about a minute later.
+    Edits are auto-saved in this browser until you publish.
+    <div class="toolbar" style="margin-top:10px;">
+      <button id="reload" class="small">Reload from live site</button>
+      <button id="export" class="small">Export backup</button>
+      <button id="import" class="small">Import backup</button>
+      <input id="importFile" type="file" accept="application/json" style="display:none" />
+    </div>
+  </div>
+  <div id="form"></div>
+</main>
+
+<script>
+"use strict";
+
+var DRAFT_KEY = "simplytk-admin-draft-v1";
+var state = null;
+
+// --- Schema: describes how to render each part of the content. ---------------
+var SCHEMA = [
+  { key: "config", title: "Site settings", kind: "object",
+    fields: [
+      ["name", "Your name", "input"],
+      ["brand", "Brand name", "input"],
+      ["email", "Contact email", "input"],
+      ["bookingUrl", "Default booking link", "input"]
+    ] },
+  { key: "hero", title: "Hero (top of the page)", kind: "object",
+    fields: [
+      ["eyebrow", "Eyebrow line", "input"],
+      ["title", "Headline", "textarea"],
+      ["subtitle", "Sub-headline", "textarea"]
+    ],
+    groups: [
+      ["primaryCta", "Primary button", [["label", "Label", "input"], ["href", "Link", "input"]]],
+      ["secondaryCta", "Secondary button", [["label", "Label", "input"], ["href", "Link", "input"]]]
+    ],
+    lists: [
+      ["stats", "Stats", [["value", "Value", "input"], ["label", "Label", "input"]]]
+    ] },
+  { key: "nav", title: "Navigation links", kind: "list",
+    itemFields: [["label", "Label", "input"], ["href", "Link", "input"]] },
+  { key: "pillars", title: "How I help (topic cards)", kind: "list",
+    itemFields: [["title", "Title", "input"], ["description", "Description", "textarea"], ["href", "Link", "input"]] },
+  { key: "packages", title: "Mentoring packages", kind: "list",
+    itemFields: [
+      ["name", "Name", "input"], ["price", "Price", "input"], ["cadence", "Cadence", "input"],
+      ["description", "Description", "textarea"], ["cta", "Button label", "input"],
+      ["bookingUrl", "Booking / checkout link", "input"], ["highlighted", "Highlight as “Most popular”", "checkbox"]
+    ],
+    stringLists: [["features", "Features"]] },
+  { key: "products", title: "Resources (digital products)", kind: "list",
+    itemFields: [
+      ["title", "Title", "input"], ["format", "Format", "input"],
+      ["description", "Description", "textarea"], ["price", "Price", "input"],
+      ["href", "Buy / checkout link", "input"]
+    ] },
+  { key: "testimonials", title: "Testimonials", kind: "list",
+    itemFields: [["quote", "Quote", "textarea"], ["name", "Name", "input"], ["descriptor", "Descriptor", "input"]] },
+  { key: "about", title: "About section", kind: "object",
+    fields: [["heading", "Heading", "input"], ["ctaLabel", "Button label", "input"], ["ctaHref", "Button link", "input"]],
+    stringLists: [["paragraphs", "Paragraphs"]] },
+  { key: "faqs", title: "FAQ", kind: "list",
+    itemFields: [["q", "Question", "input"], ["a", "Answer", "textarea"]] },
+  { key: "socials", title: "Social links", kind: "list",
+    itemFields: [["label", "Label", "input"], ["href", "Link", "input"]] }
+];
+
+// --- Path helpers ------------------------------------------------------------
+function getByPath(obj, path) {
+  var parts = path.split(".");
+  var cur = obj;
+  for (var i = 0; i < parts.length; i++) {
+    if (cur == null) return undefined;
+    cur = cur[parts[i]];
+  }
+  return cur;
+}
+function setByPath(obj, path, value) {
+  var parts = path.split(".");
+  var cur = obj;
+  for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+  cur[parts[parts.length - 1]] = value;
+}
+function removeByPath(obj, path) {
+  var parts = path.split(".");
+  var cur = obj;
+  for (var i = 0; i < parts.length - 1; i++) cur = cur[parts[i]];
+  var last = parts[parts.length - 1];
+  if (Array.isArray(cur)) cur.splice(Number(last), 1);
+  else delete cur[last];
+}
+
+// --- Escaping ----------------------------------------------------------------
+function escAttr(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
+}
+function escText(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+// --- Field renderers ---------------------------------------------------------
+function renderField(path, label, type) {
+  var val = getByPath(state, path);
+  if (type === "checkbox") {
+    return '<div class="field"><label class="checkbox"><input type="checkbox" data-path="' +
+      escAttr(path) + '"' + (val ? " checked" : "") + " /> " + escText(label) + "</label></div>";
+  }
+  if (type === "textarea") {
+    return '<div class="field"><label>' + escText(label) + '</label><textarea data-path="' +
+      escAttr(path) + '">' + escText(val) + "</textarea></div>";
+  }
+  return '<div class="field"><label>' + escText(label) + '</label><input type="text" data-path="' +
+    escAttr(path) + '" value="' + escAttr(val) + '" /></div>';
+}
+
+function renderStringList(path, title) {
+  var arr = getByPath(state, path) || [];
+  var html = '<div class="group"><h3>' + escText(title) + "</h3>";
+  for (var i = 0; i < arr.length; i++) {
+    html += '<div class="strlist-row"><input type="text" data-path="' + escAttr(path + "." + i) +
+      '" value="' + escAttr(arr[i]) + '" /><button class="link" data-remove="' +
+      escAttr(path + "." + i) + '">Remove</button></div>';
+  }
+  html += '<button class="add small" data-addstr="' + escAttr(path) + '">+ Add</button></div>';
+  return html;
+}
+
+function renderItemFields(basePath, itemFields, stringLists) {
+  var html = "";
+  for (var i = 0; i < itemFields.length; i++) {
+    var f = itemFields[i];
+    html += renderField(basePath + "." + f[0], f[1], f[2]);
+  }
+  if (stringLists) {
+    for (var j = 0; j < stringLists.length; j++) {
+      html += renderStringList(basePath + "." + stringLists[j][0], stringLists[j][1]);
+    }
+  }
+  return html;
+}
+
+function renderList(basePath, arr, itemFields, stringLists, singular) {
+  var html = "";
+  for (var i = 0; i < arr.length; i++) {
+    html += '<div class="card"><div class="card-head"><span>' + escText(singular) + " " + (i + 1) +
+      '</span><button class="link" data-remove="' + escAttr(basePath + "." + i) + '">Delete</button></div>' +
+      renderItemFields(basePath + "." + i, itemFields, stringLists) + "</div>";
+  }
+  html += '<button class="add" data-additem="' + escAttr(basePath) + '">+ Add ' + escText(singular.toLowerCase()) + "</button>";
+  return html;
+}
+
+function renderSection(sec) {
+  var html = '<div class="section"><h2>' + escText(sec.title) + "</h2>";
+  if (sec.kind === "object") {
+    if (sec.fields) for (var i = 0; i < sec.fields.length; i++) {
+      var f = sec.fields[i];
+      html += renderField(sec.key + "." + f[0], f[1], f[2]);
+    }
+    if (sec.groups) for (var g = 0; g < sec.groups.length; g++) {
+      var grp = sec.groups[g];
+      html += '<div class="group"><h3>' + escText(grp[1]) + "</h3>";
+      var gf = grp[2];
+      for (var k = 0; k < gf.length; k++) {
+        html += renderField(sec.key + "." + grp[0] + "." + gf[k][0], gf[k][1], gf[k][2]);
+      }
+      html += "</div>";
+    }
+    if (sec.stringLists) for (var s = 0; s < sec.stringLists.length; s++) {
+      html += renderStringList(sec.key + "." + sec.stringLists[s][0], sec.stringLists[s][1]);
+    }
+    if (sec.lists) for (var l = 0; l < sec.lists.length; l++) {
+      var lst = sec.lists[l];
+      html += '<div class="group"><h3>' + escText(lst[1]) + "</h3>" +
+        renderList(sec.key + "." + lst[0], getByPath(state, sec.key + "." + lst[0]) || [], lst[2], null, "Item") + "</div>";
+    }
+  } else {
+    var singular = sec.title.replace(/s$/, "").replace(/ \(.*\)$/, "");
+    html += renderList(sec.key, state[sec.key] || [], sec.itemFields, sec.stringLists, singular);
+  }
+  html += "</div>";
+  return html;
+}
+
+function render() {
+  var out = "";
+  for (var i = 0; i < SCHEMA.length; i++) out += renderSection(SCHEMA[i]);
+  document.getElementById("form").innerHTML = out;
+}
+
+// --- Template builders for "add" --------------------------------------------
+function blankFromFields(itemFields, stringLists) {
+  var obj = {};
+  for (var i = 0; i < itemFields.length; i++) {
+    obj[itemFields[i][0]] = itemFields[i][2] === "checkbox" ? false : "";
+  }
+  if (stringLists) for (var j = 0; j < stringLists.length; j++) obj[stringLists[j][0]] = [];
+  return obj;
+}
+// Find the schema list config that owns a given base path.
+function listConfigFor(basePath) {
+  var parts = basePath.split(".");
+  var top = parts[0];
+  for (var i = 0; i < SCHEMA.length; i++) {
+    var sec = SCHEMA[i];
+    if (sec.key !== top) continue;
+    if (sec.kind === "list" && parts.length === 1) {
+      return { itemFields: sec.itemFields, stringLists: sec.stringLists || null };
+    }
+    if (sec.lists) for (var l = 0; l < sec.lists.length; l++) {
+      if (sec.lists[l][0] === parts[1]) return { itemFields: sec.lists[l][2], stringLists: null };
+    }
+  }
+  return null;
+}
+
+// --- Persistence -------------------------------------------------------------
+function saveDraft() {
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify(state)); } catch (e) {}
+}
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+}
+function setStatus(msg, cls) {
+  var el = document.getElementById("status");
+  el.textContent = msg || "";
+  el.className = cls || "";
+}
+
+// --- Events ------------------------------------------------------------------
+document.getElementById("form").addEventListener("input", function (e) {
+  var t = e.target;
+  var path = t.getAttribute("data-path");
+  if (!path) return;
+  setByPath(state, path, t.type === "checkbox" ? t.checked : t.value);
+  saveDraft();
+  setStatus("Unsaved edits", "busy");
+});
+
+document.getElementById("form").addEventListener("click", function (e) {
+  var t = e.target;
+  if (t.tagName !== "BUTTON") return;
+  var rem = t.getAttribute("data-remove");
+  var addStr = t.getAttribute("data-addstr");
+  var addItem = t.getAttribute("data-additem");
+  if (rem) { removeByPath(state, rem); }
+  else if (addStr) {
+    var arr = getByPath(state, addStr);
+    if (Array.isArray(arr)) arr.push("");
+  }
+  else if (addItem) {
+    var cfg = listConfigFor(addItem);
+    var arr2 = getByPath(state, addItem);
+    if (cfg && Array.isArray(arr2)) arr2.push(blankFromFields(cfg.itemFields, cfg.stringLists));
+  }
+  else return;
+  render();
+  saveDraft();
+  setStatus("Unsaved edits", "busy");
+});
+
+document.getElementById("publish").addEventListener("click", async function () {
+  var pw = document.getElementById("password").value;
+  if (!pw) { setStatus("Enter your publish password first.", "err"); return; }
+  setStatus("Publishing…", "busy");
+  this.disabled = true;
+  try {
+    var res = await fetch("/api/publish", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ password: pw, content: state })
+    });
+    var data = await res.json();
+    if (res.ok && data.ok) {
+      setStatus(data.message || "Published!", "ok");
+      clearDraft();
+    } else {
+      setStatus(data.error || ("Failed (" + res.status + ")"), "err");
+    }
+  } catch (err) {
+    setStatus("Network error — please try again.", "err");
+  } finally {
+    this.disabled = false;
+  }
+});
+
+document.getElementById("reload").addEventListener("click", function () {
+  if (!confirm("Discard your local edits and reload the live content?")) return;
+  clearDraft();
+  load(true);
+});
+
+document.getElementById("export").addEventListener("click", function () {
+  var blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "content-backup.json"; a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("import").addEventListener("click", function () {
+  document.getElementById("importFile").click();
+});
+document.getElementById("importFile").addEventListener("change", function (e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function () {
+    try {
+      state = JSON.parse(reader.result);
+      render(); saveDraft();
+      setStatus("Backup loaded — review, then Publish.", "ok");
+    } catch (err) { setStatus("That file isn't valid JSON.", "err"); }
+  };
+  reader.readAsText(file);
+});
+
+// --- Load --------------------------------------------------------------------
+async function load(force) {
+  setStatus("Loading…", "busy");
+  var draft = null;
+  if (!force) {
+    try { draft = JSON.parse(localStorage.getItem(DRAFT_KEY)); } catch (e) {}
+  }
+  if (draft && draft.config) {
+    state = draft;
+    render();
+    setStatus("Restored your unsaved edits.", "busy");
+    return;
+  }
+  try {
+    var res = await fetch("/api/content", { cache: "no-store" });
+    state = await res.json();
+    render();
+    setStatus("Loaded.", "ok");
+    setTimeout(function () { setStatus("", ""); }, 1500);
+  } catch (err) {
+    setStatus("Couldn't load content.", "err");
+  }
+}
+
+load(false);
+</script>
+</body>
+</html>

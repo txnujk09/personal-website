@@ -29,9 +29,38 @@ Then `npm run build` for a production build.
 
 ## Editing content
 
-**Almost everything you'll want to change lives in [`lib/constants.ts`](lib/constants.ts).**
-Prices, package features, product descriptions, testimonials, FAQs, nav links,
-and social URLs are all plain data there — no need to touch the components.
+All site content lives in one file: [`data/content.json`](data/content.json) —
+hero text, mentoring packages, resources, testimonials, FAQs, About, nav, and
+socials. You can edit it two ways:
+
+- **Visual editor (no code):** go to `https://your-site.vercel.app/admin.html`,
+  edit in forms, and click **Publish**. See "Content editor" below to switch it on.
+- **By hand:** edit `data/content.json` directly and commit.
+
+## Content editor (`/admin.html`)
+
+A password-protected editor that publishes changes straight to your live site.
+When you hit **Publish**, it commits `data/content.json` back to GitHub, and
+Vercel redeploys automatically (~1 minute).
+
+**Turn it on** by adding four Environment Variables in Vercel
+(**Project → Settings → Environment Variables**), then redeploying:
+
+| Variable | Value |
+| --- | --- |
+| `ADMIN_PASSWORD` | any password you choose — you'll type it to publish |
+| `GH_COMMIT_TOKEN` | a GitHub token with **Contents: Read and write** on this repo |
+| `GH_REPO` | `txnujk09/personal-website` |
+| `GH_BRANCH` | the branch Vercel deploys (your production branch) |
+
+To create `GH_COMMIT_TOKEN`: GitHub → **Settings → Developer settings →
+Fine-grained personal access tokens → Generate new token**, limit it to this one
+repository, and give it **Repository permissions → Contents: Read and write**.
+Keep it secret; if it ever leaks, revoke and regenerate it.
+
+> The editor page is isolated in `public/`, so it can never break your site's
+> build. Until the variables are set, Publish returns a friendly "not configured
+> yet" message and the rest of the site works normally.
 
 ## Going live — the checklist
 
@@ -42,17 +71,17 @@ launch, wire up real payments:
    [Cal.com](https://cal.com) or [Calendly](https://calendly.com) event type
    with Stripe payment enabled (or a
    [Stripe Payment Link](https://stripe.com/gb/payments/payment-links)). Paste
-   the URL into each package's `bookingUrl` in `lib/constants.ts`, and into
-   `CONFIG.bookingUrl`.
+   the URL into each package's `bookingUrl` (in the editor, or in
+   `data/content.json`).
 2. **Digital product payments** — the fastest route is
    [Gumroad](https://gumroad.com) or Stripe Payment Links (both host the
-   file/checkout for you). Paste each product URL into its `href` in the
-   `PRODUCTS` array.
+   file/checkout for you). Paste each product URL into its "Buy link" (the
+   `href` field of each product).
 3. **Newsletter** — `components/Newsletter.tsx` currently just fakes a success
    state. Point the form at your provider (Mailchimp, ConvertKit, Beehiiv,
    Substack) — most give you an embeddable form action URL.
 4. **Real copy & prices** — review the testimonials, About paragraphs, and
-   prices in `lib/constants.ts` and make them yours.
+   prices via the editor and make them yours.
 5. **Images** — add a `public/images/` folder with your photos and swap the grey
    placeholder `<div>`s in the Hero, About, and cards for `next/image`. Add
    `public/favicon.ico` and `public/images/og.jpg` (referenced in

@@ -1,4 +1,5 @@
 import { Button } from "./Button";
+import { ABOUT } from "@/lib/constants";
 
 export function About() {
   return (
@@ -9,29 +10,16 @@ export function About() {
 
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-foreground lg:text-4xl">
-            About Tanuj
+            {ABOUT.heading}
           </h2>
           <div className="mt-6 space-y-4 text-muted leading-relaxed">
-            <p>
-              A few years ago I was exactly where you are — staring at a UCAS
-              form, wondering how anyone actually lands a spring week, and
-              trying to figure out how to train without falling behind on work.
-            </p>
-            <p>
-              I worked it out the hard way. I got into Imperial, secured 6+
-              spring weeks at top banking, tech, and consulting firms, and
-              co-founded A* AI along the way — all while building a physique I&apos;m
-              genuinely proud of.
-            </p>
-            <p>
-              Now I package everything I learned into clear systems and honest
-              1:1 mentoring, so you can get there faster and skip the mistakes I
-              made. No gatekeeping, no fluff — just what works.
-            </p>
+            {ABOUT.paragraphs.map((paragraph, i) => (
+              <p key={i}>{paragraph}</p>
+            ))}
           </div>
 
           <div className="mt-8">
-            <Button href="#mentoring">Work with me</Button>
+            <Button href={ABOUT.ctaHref}>{ABOUT.ctaLabel}</Button>
           </div>
         </div>
       </div>
