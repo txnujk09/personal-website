@@ -3,7 +3,8 @@
     "name": "Tanuj Kakumani",
     "brand": "simplytk",
     "email": "hello@simplytk.com",
-    "bookingUrl": "https://cal.com/tanuj"
+    "bookingUrl": "https://cal.com/tanuj",
+    "calLink": "your-cal-username/mentoring"
   },
   "nav": [
     { "label": "How I help", "href": "#help" },

@@ -5,6 +5,9 @@ type Variant = "primary" | "outline";
 type BaseProps = {
   variant?: Variant;
   className?: string;
+  // Cal.com embed hooks — when set, the button opens the booking popup.
+  "data-cal-link"?: string;
+  "data-cal-config"?: string;
 };
 
 type AsButton = BaseProps &

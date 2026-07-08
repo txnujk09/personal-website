@@ -73,7 +73,9 @@ export function Mentoring() {
               </ul>
 
               <Button
-                href={CONFIG.bookingUrl}
+                href={`https://cal.com/${CONFIG.calLink}`}
+                data-cal-link={CONFIG.calLink}
+                data-cal-config='{"layout":"month_view"}'
                 variant={pkg.highlighted ? "primary" : "outline"}
                 className="mt-8 w-full"
               >
