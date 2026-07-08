@@ -14,6 +14,7 @@ export const HERO = content.hero;
 export const PILLARS = content.pillars;
 export const PACKAGES = content.packages;
 export const PRODUCTS = content.products;
+export const PRODUCTS_COMING_SOON = content.productsComingSoon;
 export const TESTIMONIALS = content.testimonials;
 export const ABOUT = content.about;
 export const FAQS = content.faqs;

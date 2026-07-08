@@ -1,4 +1,4 @@
-import { PACKAGES } from "@/lib/constants";
+import { PACKAGES, CONFIG } from "@/lib/constants";
 import { Button } from "./Button";
 
 export function Mentoring() {
@@ -73,7 +73,7 @@ export function Mentoring() {
               </ul>
 
               <Button
-                href={pkg.bookingUrl}
+                href={CONFIG.bookingUrl}
                 variant={pkg.highlighted ? "primary" : "outline"}
                 className="mt-8 w-full"
               >

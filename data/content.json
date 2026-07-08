@@ -93,6 +93,7 @@
       "bookingUrl": "https://cal.com/tanuj/full-playbook"
     }
   ],
+  "productsComingSoon": true,
   "products": [
     {
       "title": "The Spring Week Application Playbook",
