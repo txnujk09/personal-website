@@ -292,17 +292,32 @@ Indexing rationale: every read is "this user, recent days/activities first", so 
 
 ---
 
-## 5. Open Questions (need your call before Phase 2)
+## 5. Decisions (Confirmed)
 
-1. **Repo placement.** I put this `PLAN.md` in `personal-website` (a feature branch, so easily moved). The health agent is a **new** project — do you want a **dedicated repo** (e.g. `health-agent`) created for Phase 2 instead of living here or in `simplytk-mentor-hub`?
-2. **Hevy Pro** — is it already active on your account? (Gates the entire Hevy path.)
-3. **Vercel plan** — Hobby or Pro? Affects cron frequency and any in-cloud backfill timeouts.
-4. **Users source of truth** — plain app-managed `users` table (as drafted), or tie `users.id` to **Supabase Auth** (`auth.users`) now so RLS/`auth.uid()` works out of the box?
-5. **Token encryption** — Supabase Vault, `pgcrypto`, or app-level encryption? (I'd default to Vault.)
-6. **Raw retention** — keep `raw jsonb` on every table (future-proof, more storage) or slim to typed columns only?
-7. **Oura scope** — sleep/readiness/HRV only, or also pull Oura's own activity/workout collections (Strava + Hevy already cover activity)?
-8. **Backfill depth** — firm 30 days, or grab the full ~2 years Oura now offers (Strava/Hevy as far back as they go) since it's cheap and one-time?
-9. **Failure alerting** — want a minimal "sync failed" notification stub now (email/log), or defer all notifications to the Telegram phase?
+All open questions are resolved — Phase 2 starts from these:
+
+| # | Decision | Rationale |
+|---|---|---|
+| 1 | **Dedicated `health-agent` repo.** Not inside `personal-website` or `simplytk-mentor-hub`. This `PLAN.md` relocates to it as the first commit. | Portability — the agent must stand alone. |
+| 2 | **Hevy Pro required** (your action — confirm active + grab key). | Gates the Hevy path; no fallback. |
+| 3 | **Vercel Hobby.** One daily cron fits the limits; backfill runs locally. No Pro yet. | Avoid paying until intra-day sync is actually wanted. |
+| 4 | **Plain `users` table, single hardcoded row.** Not wired to Supabase Auth. Schema already leaves room to add `auth.users` when a second user appears. | Auth only matters once someone who isn't you logs in. |
+| 5 | **Token encryption via Supabase Vault.** | Managed, service-role-only, no app-side key handling. |
+| 6 | **Keep `raw jsonb` on every table.** | Cheap insurance against provider schema drift; storage is negligible at one user. |
+| 7 | **Oura = sleep / readiness / HRV only.** No Oura activity/workout collections. | Strava + Hevy already cover activity. |
+| 8 | **Backfill 30 days to start.** Idempotent upserts make extending the window later a one-line re-run. | Matches the two-weekend scope. |
+| 9 | **Minimal sync-failure stub now** (console/log + `sync_log.status='error'`); rich notifications deferred to the Telegram phase. | Enough observability without building alerting twice. |
+| 10 | **Don't chase the two Hevy VERIFY flags before building.** Phase 2 handles them **defensively**: if `/v1/workouts/events` behaves differently than assumed, page `/v1/workouts` (pageSize 10) until older than the watermark; throttle conservatively for the undocumented rate limit. | At one user's volume, worst case is trivially cheap. |
+
+### Your pre-Phase-2 admin checklist (I can't do these — they need your accounts / consent / payment)
+
+- [ ] **Register the Oura OAuth app** — ⚠️ **do this first / today.** PAT is dead, approval isn't always instant, so it's now on the critical path (was previously "instant").
+- [ ] **Register the Strava OAuth app** (client id/secret, redirect URI).
+- [ ] **Confirm Hevy Pro active** and copy the key from `hevy.com/settings?developer`.
+- [ ] **Create the standalone Supabase project** (not Lovable-managed) — project URL, `anon`, `service_role` keys.
+- [ ] **Create the `health-agent` GitHub repo** — or tell me to create it.
+
+Phase 2 **code** (repo scaffold, migration SQL, provider clients, cron route, backfill script) needs **no** live credentials — those are only required to *run* it. So I can scaffold in parallel with your admin the moment the repo is in this session.
 
 ---
 
@@ -322,4 +337,4 @@ Verified July 2026. Items marked **VERIFY** in §1.3 could not be fetched live (
 
 ---
 
-*End of Phase 1. Awaiting your answers to §5 before starting Phase 2 (schema migration + scaffolding).*
+*End of Phase 1. Decisions locked in §5. Phase 2 begins once the `health-agent` repo is in the session and the credential checklist is underway.*
